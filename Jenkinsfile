@@ -210,16 +210,12 @@ spec:
                     my_exit_code=$?
                     echo "RESULT 1:--- $my_exit_code"
 
-                    trivy --exit-code 1 --severity HIGH,CRITICAL gandigit/wcare-sub-bonds
-                    my_exit_code=$?
-                    echo "RESULT 2:--- $my_exit_code"
-
-                    # Check if the URL is valid and we can continue
-                    if [ -n "${my_exit_code}" ]; then
-                        echo "Image is scanned Successfully. No vulnerabilities found"
-                    else
+                    # Check scan results
+                    if [ ${my_exit_code} == 1 ]; then
                         echo "Image scanning failed. Some vulnerabilities found"
                         exit 1;
+                    else
+                        echo "Image is scanned Successfully. No vulnerabilities found"
                     fi;
 
                     # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
