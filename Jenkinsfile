@@ -206,7 +206,26 @@ spec:
 
                     echo "ScanImage Before Trivy image scanning....0"
 
-                    trivy python:3.4-alpine
+                    trivy --exit-code 1 --severity CRITICAL python:3.4-alpine
+
+                    test_exit_code=$?
+
+                    echo "RESULT 1:--- $test_exit_code"
+
+                    trivy --exit-code 1 --severity CRITICAL gandigit/wcare-sub-bonds
+
+                    test_exit_cod1e=$?
+
+                    echo "RESULT 2:--- $test_exit_code1"
+
+                    # Check if the URL is valid and we can continue
+                    if [ -n "${URL}" ]; then
+                        echo "Successfully read Repo ${URL}"
+                    else
+                        echo "No Repository Created"
+                        exit 1;
+                    fi;
+
                     # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
 
                     echo "ScanImage After Trivy image scanning....0"
