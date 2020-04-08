@@ -206,23 +206,19 @@ spec:
 
                     echo "ScanImage Before Trivy image scanning....0"
 
-                    trivy --exit-code 1 --severity CRITICAL python:3.4-alpine
+                    trivy --exit-code 1 --severity HIGH,CRITICAL python:3.4-alpine
+                    my_exit_code=$?
+                    echo "RESULT 1:--- $my_exit_code"
 
-                    test_exit_code=$?
-
-                    echo "RESULT 1:--- $test_exit_code"
-
-                    trivy --exit-code 1 --severity CRITICAL gandigit/wcare-sub-bonds
-
-                    test_exit_cod1e=$?
-
-                    echo "RESULT 2:--- $test_exit_code1"
+                    trivy --exit-code 1 --severity HIGH,CRITICAL gandigit/wcare-sub-bonds
+                    my_exit_code=$?
+                    echo "RESULT 2:--- $my_exit_code"
 
                     # Check if the URL is valid and we can continue
-                    if [ -n "${URL}" ]; then
-                        echo "Successfully read Repo ${URL}"
+                    if [ -n "${my_exit_code}" ]; then
+                        echo "Image is scanned Successfully. No vulnerabilities found"
                     else
-                        echo "No Repository Created"
+                        echo "Image scanning failed. Some vulnerabilities found"
                         exit 1;
                     fi;
 
