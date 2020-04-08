@@ -303,26 +303,37 @@ spec:
                 '''
             }
         }
-        container(name: 'buildah', shell: '/bin/bash') {
+        // container(name: 'buildah', shell: '/bin/bash') {
+        //     stage('Build image') {
+        //         sh '''#!/bin/bash
+        //             set -e
+        //             . ./env-config
+
+		    //         echo TLSVERIFY=${TLSVERIFY}
+		    //         echo CONTEXT=${CONTEXT}
+
+		    //         if [[ -z "${REGISTRY_PASSWORD}" ]]; then
+		    //           REGISTRY_PASSWORD="${APIKEY}"
+		    //         fi
+
+        //             APP_IMAGE="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
+
+        //             buildah bud --tls-verify=${TLSVERIFY} --format=docker -f ${DOCKERFILE} -t ${APP_IMAGE} ${CONTEXT}
+
+        //         '''
+        //     }
+        // }
+
+         container(name: 'ibmcloud', shell: '/bin/bash') {
             stage('Build image') {
                 sh '''#!/bin/bash
-                    set -e
                     . ./env-config
-
-		            echo TLSVERIFY=${TLSVERIFY}
-		            echo CONTEXT=${CONTEXT}
-
-		            if [[ -z "${REGISTRY_PASSWORD}" ]]; then
-		              REGISTRY_PASSWORD="${APIKEY}"
-		            fi
-
-                    APP_IMAGE="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
-
-                    buildah bud --tls-verify=${TLSVERIFY} --format=docker -f ${DOCKERFILE} -t ${APP_IMAGE} ${CONTEXT}
-
+                    echo -e "=========================================================================================="
+                    echo -e "BUILDING CONTAINER IMAGE: ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
+                    ibmcloud cr build -t ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION} .
                 '''
             }
-        }
+
         container(name: 'trivy', shell: '/bin/sh') {
             stage('Scan image using trivy') {
                   echo "ScanImage Before Trivy image scanning....0"
@@ -370,7 +381,7 @@ spec:
             }
         }
         container(name: 'buildah', shell: '/bin/bash') {
-            stage('Build image') {
+            stage('Push image') {
                 sh '''#!/bin/bash
                     set -e
                     . ./env-config
