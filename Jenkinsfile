@@ -173,7 +173,7 @@ spec:
         - name: BUILD_NUMBER
           value: ${env.BUILD_NUMBER}
     - name: trivy
-      image: docker.io/aquasec/trivy:latest
+      image: docker.io/aquasec/trivy
       tty: true
       command: ["/bin/bash"]
       workingDir: ${workingDir}
