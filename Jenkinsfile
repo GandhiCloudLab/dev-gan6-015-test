@@ -172,6 +172,18 @@ spec:
           value: ${namespace}
         - name: BUILD_NUMBER
           value: ${env.BUILD_NUMBER}
+    - name: trivy
+      image: docker.io/aquasec/trivy:latest
+      tty: true
+      command: ["/bin/bash"]
+      workingDir: ${workingDir}
+      env:
+        - name: HOME
+          value: /home/devops
+        - name: ENVIRONMENT_NAME
+          value: ${namespace}
+        - name: BUILD_NUMBER
+          value: ${env.BUILD_NUMBER}          
     - name: trigger-cd
       image: docker.io/garagecatalyst/ibmcloud-dev:1.0.8
       tty: true
@@ -187,6 +199,18 @@ spec:
 """
 ) {
     node(buildLabel) {
+
+        container(name: 'trivy', shell: '/bin/bash') {
+          stage('ScanImage') {
+                sh '''
+                    echo "ScanImage Before Trivy image scanning....0"
+
+                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
+
+                    echo "ScanImage After Trivy image scanning....0"
+                '''
+            }
+        }
         container(name: 'jdk11', shell: '/bin/bash') {
             checkout scm
             stage('Setup') {
