@@ -238,102 +238,102 @@ spec:
                     ./gradlew assemble --no-daemon
                 '''
             }
-            stage('Test') {
-                sh '''#!/bin/bash
-                    ./gradlew testClasses --no-daemon
-                '''
-            }
-            stage('Sonar scan') {
-                sh '''#!/bin/bash
+            // stage('Test') {
+            //     sh '''#!/bin/bash
+            //         ./gradlew testClasses --no-daemon
+            //     '''
+            // }
+            // stage('Sonar scan') {
+            //     sh '''#!/bin/bash
 
-                if [[ -z "${SONARQUBE_URL}" ]]; then
-                  echo "Skipping Sonar Qube step as Sonar Qube not installed or configured"
-                  exit 0
-                fi
+            //     if [[ -z "${SONARQUBE_URL}" ]]; then
+            //       echo "Skipping Sonar Qube step as Sonar Qube not installed or configured"
+            //       exit 0
+            //     fi
 
-                if ./gradlew tasks --all | grep -Eq "^sonarqube"; then
-                    echo "SonarQube task found"
-                else
-                    echo "Skipping SonarQube step, no task defined"
-                    exit 0
-                fi
+            //     if ./gradlew tasks --all | grep -Eq "^sonarqube"; then
+            //         echo "SonarQube task found"
+            //     else
+            //         echo "Skipping SonarQube step, no task defined"
+            //         exit 0
+            //     fi
 
-                ./gradlew \
-                  -Dsonar.login=${SONARQUBE_USER} \
-                  -Dsonar.password=${SONARQUBE_PASSWORD} \
-                  -Dsonar.host.url=${SONARQUBE_URL} \
-                  -Psonar.projectName=${IMAGE_NAME} \
-                  sonarqube
-                '''
-            }
+            //     ./gradlew \
+            //       -Dsonar.login=${SONARQUBE_USER} \
+            //       -Dsonar.password=${SONARQUBE_PASSWORD} \
+            //       -Dsonar.host.url=${SONARQUBE_URL} \
+            //       -Psonar.projectName=${IMAGE_NAME} \
+            //       sonarqube
+            //     '''
+            // }
         }
-        container(name: 'node', shell: '/bin/bash') {
-            stage('Tag release') {
-                sh '''#!/bin/bash
-                    set -x
-                    set -e
-
-                    git fetch origin ${BRANCH} --tags
-                    git checkout ${BRANCH}
-                    git branch --set-upstream-to=origin/${BRANCH} ${BRANCH}
-
-                    git config --global user.name "Jenkins Pipeline"
-                    git config --global user.email "jenkins@ibmcloud.com"
-                    git config --local credential.helper "!f() { echo username=\\$GIT_AUTH_USER; echo password=\\$GIT_AUTH_PWD; }; f"
-
-                    mkdir -p ~/.npm
-                    npm config set prefix ~/.npm
-                    export PATH=$PATH:~/.npm/bin
-                    npm i -g release-it
-
-                    if [[ "${BRANCH}" != "master" ]]; then
-                        PRE_RELEASE="--preRelease=${BRANCH}"
-                    fi
-
-                    release-it patch ${PRE_RELEASE} \
-                      --ci \
-                      --no-npm \
-                      --no-git.requireCleanWorkingDir \
-                      --verbose \
-                      -VV
-
-                    echo "IMAGE_VERSION=$(git describe --abbrev=0 --tags)" >> ./env-config
-
-                    cat ./env-config
-                '''
-            }
-        }
-        // container(name: 'buildah', shell: '/bin/bash') {
-        //     stage('Build image') {
+        // container(name: 'node', shell: '/bin/bash') {
+        //     stage('Tag release') {
         //         sh '''#!/bin/bash
+        //             set -x
         //             set -e
-        //             . ./env-config
 
-		    //         echo TLSVERIFY=${TLSVERIFY}
-		    //         echo CONTEXT=${CONTEXT}
+        //             git fetch origin ${BRANCH} --tags
+        //             git checkout ${BRANCH}
+        //             git branch --set-upstream-to=origin/${BRANCH} ${BRANCH}
 
-		    //         if [[ -z "${REGISTRY_PASSWORD}" ]]; then
-		    //           REGISTRY_PASSWORD="${APIKEY}"
-		    //         fi
+        //             git config --global user.name "Jenkins Pipeline"
+        //             git config --global user.email "jenkins@ibmcloud.com"
+        //             git config --local credential.helper "!f() { echo username=\\$GIT_AUTH_USER; echo password=\\$GIT_AUTH_PWD; }; f"
 
-        //             APP_IMAGE="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
+        //             mkdir -p ~/.npm
+        //             npm config set prefix ~/.npm
+        //             export PATH=$PATH:~/.npm/bin
+        //             npm i -g release-it
 
-        //             buildah bud --tls-verify=${TLSVERIFY} --format=docker -f ${DOCKERFILE} -t ${APP_IMAGE} ${CONTEXT}
+        //             if [[ "${BRANCH}" != "master" ]]; then
+        //                 PRE_RELEASE="--preRelease=${BRANCH}"
+        //             fi
 
+        //             release-it patch ${PRE_RELEASE} \
+        //               --ci \
+        //               --no-npm \
+        //               --no-git.requireCleanWorkingDir \
+        //               --verbose \
+        //               -VV
+
+        //             echo "IMAGE_VERSION=$(git describe --abbrev=0 --tags)" >> ./env-config
+
+        //             cat ./env-config
         //         '''
         //     }
         // }
-
-         container(name: 'ibmcloud', shell: '/bin/bash') {
+        container(name: 'buildah', shell: '/bin/bash') {
             stage('Build image') {
                 sh '''#!/bin/bash
+                    set -e
                     . ./env-config
-                    echo -e "=========================================================================================="
-                    echo -e "BUILDING CONTAINER IMAGE: ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
-                    ibmcloud cr build -t ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION} .
+
+		            echo TLSVERIFY=${TLSVERIFY}
+		            echo CONTEXT=${CONTEXT}
+
+		            if [[ -z "${REGISTRY_PASSWORD}" ]]; then
+		              REGISTRY_PASSWORD="${APIKEY}"
+		            fi
+
+                    APP_IMAGE="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
+
+                    buildah bud --tls-verify=${TLSVERIFY} --format=docker -f ${DOCKERFILE} -t ${APP_IMAGE} ${CONTEXT}
+
                 '''
             }
-         }
+        }
+
+        //  container(name: 'ibmcloud', shell: '/bin/bash') {
+        //     stage('Build image') {
+        //         sh '''#!/bin/bash
+        //             . ./env-config
+        //             echo -e "=========================================================================================="
+        //             echo -e "BUILDING CONTAINER IMAGE: ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
+        //             ibmcloud cr build -t ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION} .
+        //         '''
+        //     }
+        //  }
         container(name: 'trivy', shell: '/bin/sh') {
             stage('Scan image using trivy') {
                   echo "ScanImage Before Trivy image scanning....0"
