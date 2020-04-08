@@ -175,7 +175,7 @@ spec:
     - name: trivy
       image: docker.io/aquasec/trivy
       tty: true
-      command: ["/bin/bash"]
+      command: ["/bin/sh"]
       workingDir: ${workingDir}
       env:
         - name: HOME
@@ -200,10 +200,10 @@ spec:
 ) {
     node(buildLabel) {
 
-        container(name: 'trivy', shell: '/bin/bash') {
+        container(name: 'trivy', shell: '/bin/sh') {
           stage('ScanImage') {
-                 sh '''#!/bin/bash
-                 
+                 sh '''#!/bin/sh
+
                     echo "ScanImage Before Trivy image scanning....0"
 
                     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
