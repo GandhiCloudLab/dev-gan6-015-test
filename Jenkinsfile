@@ -333,7 +333,7 @@ spec:
                     ibmcloud cr build -t ${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION} .
                 '''
             }
-
+         }
         container(name: 'trivy', shell: '/bin/sh') {
             stage('Scan image using trivy') {
                   echo "ScanImage Before Trivy image scanning....0"
