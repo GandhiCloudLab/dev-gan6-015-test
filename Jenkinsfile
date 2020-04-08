@@ -318,31 +318,72 @@ spec:
 
                     APP_IMAGE="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
 
-                    echo "Before Trivy image scanning....0"
-
-                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
-
-                    echo "After Trivy image scanning....0"
-
-
-                    echo "Before image build ...."
-
                     buildah bud --tls-verify=${TLSVERIFY} --format=docker -f ${DOCKERFILE} -t ${APP_IMAGE} ${CONTEXT}
 
-                    echo "After image build ...."
+                '''
+            }
+        }
+        container(name: 'trivy', shell: '/bin/sh') {
+            stage('Scan image using trivy') {
+                  echo "ScanImage Before Trivy image scanning....0"
 
-                    echo "Before Trivy image scanning...."
+                  sh '''#!/bin/sh
+                    set -e
+                    . ./env-config
 
-                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
+		              echo TLSVERIFY=${TLSVERIFY}
+		              echo CONTEXT=${CONTEXT}
 
-                    echo "After Trivy image scanning...."
+		            if [[ -z "${REGISTRY_PASSWORD}" ]]; then
+		              REGISTRY_PASSWORD="${APIKEY}"
+		            fi
 
 
-                    echo "Before Trivy image scanning...2."
+                    trivy --exit-code 1 --severity HIGH,CRITICAL python:3.4-alpine
+                    my_exit_code=$?
+                    echo "RESULT 0:--- $my_exit_code"
 
-                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy ${APP_IMAGE}
+                    # Test scanning ..... Check scan results
+                    if [ ${my_exit_code} == 1 ]; then
+                        echo "Image1 scanning failed. Some vulnerabilities found"
+                    else
+                        echo "Image1 is scanned Successfully. No vulnerabilities found"
+                    fi;
 
-                    echo "After Trivy image scanning...2."
+                    APP_IMAGE="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
+                    echo "ScanImage Before Trivy image scanning.... $APP_IMAGE"
+
+                    # Real scanning ..... Check scan results
+                    trivy --exit-code 1 --severity HIGH,CRITICAL ${APP_IMAGE}
+                    my_exit_code=$?
+                    echo "RESULT 1:--- $my_exit_code"
+
+                    # Check scan results
+                    if [ ${my_exit_code} == 1 ]; then
+                        echo "Image scanning failed. Some vulnerabilities found"
+                        exit 1;
+                    else
+                        echo "Image is scanned Successfully. No vulnerabilities found"
+                    fi;
+
+                    echo "ScanImage After Trivy image scanning....0"
+                '''
+            }
+        }
+        container(name: 'buildah', shell: '/bin/bash') {
+            stage('Build image') {
+                sh '''#!/bin/bash
+                    set -e
+                    . ./env-config
+
+		            echo TLSVERIFY=${TLSVERIFY}
+		            echo CONTEXT=${CONTEXT}
+
+		            if [[ -z "${REGISTRY_PASSWORD}" ]]; then
+		              REGISTRY_PASSWORD="${APIKEY}"
+		            fi
+
+                    APP_IMAGE="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
 
                     if [[ -n "${REGISTRY_USER}" ]] && [[ -n "${REGISTRY_PASSWORD}" ]]; then
                         buildah login -u "${REGISTRY_USER}" -p "${REGISTRY_PASSWORD}" "${REGISTRY_URL}"
@@ -352,6 +393,7 @@ spec:
                 '''
             }
         }
+        
         container(name: 'ibmcloud', shell: '/bin/bash') {
             stage('Deploy to DEV env') {
                 sh '''#!/bin/bash
