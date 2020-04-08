@@ -206,7 +206,7 @@ spec:
 
                     echo "ScanImage Before Trivy image scanning....0"
 
-                    trivy --exit-code 1 --severity HIGH,CRITICAL python:3.4-alpine
+                    trivy --exit-code 1 --severity CRITICAL python:3.4-alpine
                     my_exit_code=$?
                     echo "RESULT 1:--- $my_exit_code"
 
@@ -338,8 +338,7 @@ spec:
 		              REGISTRY_PASSWORD="${APIKEY}"
 		            fi
 
-
-                    trivy --exit-code 1 --severity HIGH,CRITICAL python:3.4-alpine
+                    trivy --exit-code 1 --severity CRITICAL python:3.4-alpine
                     my_exit_code=$?
                     echo "RESULT 0:--- $my_exit_code"
 
