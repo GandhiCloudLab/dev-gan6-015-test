@@ -202,7 +202,8 @@ spec:
 
         container(name: 'trivy', shell: '/bin/bash') {
           stage('ScanImage') {
-                sh '''
+                 sh '''#!/bin/bash
+                 
                     echo "ScanImage Before Trivy image scanning....0"
 
                     docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
