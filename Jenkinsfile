@@ -206,7 +206,8 @@ spec:
 
                     echo "ScanImage Before Trivy image scanning....0"
 
-                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
+                    trivy python:3.4-alpine
+                    # docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
 
                     echo "ScanImage After Trivy image scanning....0"
                 '''
