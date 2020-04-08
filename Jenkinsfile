@@ -281,10 +281,36 @@ spec:
 
                     APP_IMAGE="${REGISTRY_URL}/${REGISTRY_NAMESPACE}/${IMAGE_NAME}:${IMAGE_VERSION}"
 
+                    echo "Before Trivy image scanning....0"
+
+                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
+
+                    echo "After Trivy image scanning....0"
+
+
+                    echo "Before image build ...."
+
                     buildah bud --tls-verify=${TLSVERIFY} --format=docker -f ${DOCKERFILE} -t ${APP_IMAGE} ${CONTEXT}
+
+                    echo "After image build ...."
+
+                    echo "Before Trivy image scanning...."
+
+                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy python:3.4-alpine
+
+                    echo "After Trivy image scanning...."
+
+
+                    echo "Before Trivy image scanning...2."
+
+                    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy ${APP_IMAGE}
+
+                    echo "After Trivy image scanning...2."
+
                     if [[ -n "${REGISTRY_USER}" ]] && [[ -n "${REGISTRY_PASSWORD}" ]]; then
                         buildah login -u "${REGISTRY_USER}" -p "${REGISTRY_PASSWORD}" "${REGISTRY_URL}"
                     fi
+
                     buildah push --tls-verify=${TLSVERIFY} "${APP_IMAGE}" "docker://${APP_IMAGE}"
                 '''
             }
